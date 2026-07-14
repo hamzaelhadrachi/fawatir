@@ -12,7 +12,7 @@
     <artifactId>fawatir</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>fawatir</name>
-    <description>fawatir</description>
+    <description>Spring Boot Back End for Fawatir App that deals with Invoices for Clients</description>
     <url/>
     <licenses>
         <license/>

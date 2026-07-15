@@ -7,7 +7,7 @@
 ##############################################################
 /*
     --- General Rules ---
-    * use underscored_names instead of CamelCase
+    * use underscored_names instead of camelCase
     * Table Names should be plural
     * spell out id fields [item_id instead of id]
     * don't use embiguous column names

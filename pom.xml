@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.hardy</groupId>
     <artifactId>fawatir</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1-ALPHA</version>
     <name>fawatir</name>
     <description>Spring Boot Back End for Fawatir App that deals with Invoices for Clients</description>
     <url/>
@@ -92,6 +92,24 @@
             <scope>runtime</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                    <spring.profiles.active>dev</spring.profiles.active>
+            </properties>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <spring.profiles.active>prod</spring.profiles.active>
+            </properties>
+        </profile>
+    </profiles>
 
     <build>
         <plugins>

@@ -43,6 +43,8 @@ public class UserRepositoryImpl implements UserRepository<User> {
         if(getEmailCount(user.getEmail().trim().toLowerCase()) > 0 ) throw new ApiException("Email Already in Use ! Please Try Using A Different Email");
         // Save new user
         try{
+            user.setEnabled(false);
+            user.setNotLocked(true);
             KeyHolder holder  = new GeneratedKeyHolder();
             SqlParameterSource parameterSource  = getSqlParameterSource(user);
             jdbc.update(INSERT_USER_QUERY,parameterSource,holder);
@@ -55,8 +57,7 @@ public class UserRepositoryImpl implements UserRepository<User> {
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId",user.getId(),"url",verificationUrl));
             // Send email to user with verification url
             //emailService.sendVerificationUrl(user.getFirstName(),user.getEmail(),verificationUrl,ACCOUNT);
-            user.setEnabled(false);
-            user.setNotLocked(true);
+
             // Return the newly created user
             return user;
             // If Anny Error throw Exception with proper Message
@@ -64,6 +65,7 @@ public class UserRepositoryImpl implements UserRepository<User> {
         }catch(EmptyResultDataAccessException e){
             throw new ApiException("No role found by name: "+ROLE_USER.name());
         } catch (Exception e){
+            log.error(e.toString());
             throw new ApiException("An error occured, Please try again.");
         }
     }
@@ -99,6 +101,8 @@ public class UserRepositoryImpl implements UserRepository<User> {
                 .addValue("lastName", user.getLastName())
                 .addValue("email", user.getEmail())
                 .addValue("password", encoder.encode(user.getPassword()))
+                .addValue("enabled", user.isEnabled())
+                .addValue("nonLocked", user.isNotLocked())
                 ;
     }
     private String getVerificationUrl(String key, String type){

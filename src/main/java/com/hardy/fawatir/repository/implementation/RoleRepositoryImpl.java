@@ -15,7 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.hardy.fawatir.enumeration.RoleType.ROLE_USER;
-import static com.hardy.fawatir.query.RoleQuery.*;
+import static com.hardy.fawatir.query.RoleQuery.INSERT_ROLE_TO_USER_QUERY;
+import static com.hardy.fawatir.query.RoleQuery.SELECT_ROLE_BY_NAME_QUERY;
 import static java.util.Objects.requireNonNull;
 
 @Repository
@@ -54,11 +55,12 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
     public void addRoleToUser(Long userId, String roleName) {
         log.info("Adding Role {} to User {}", roleName, userId);
         try{
-            Role role = jdbc.queryForObject(SELECT_ROLE_BY_NAME_QUERY, Map.of("roleName",roleName),new RoleRowMapper());
+            Role role = jdbc.queryForObject(SELECT_ROLE_BY_NAME_QUERY, Map.of("name",roleName),new RoleRowMapper());
             jdbc.update(INSERT_ROLE_TO_USER_QUERY, Map.of("userId",userId,"roleId",requireNonNull(role).getId()));
         }catch(EmptyResultDataAccessException e){
             throw new ApiException("No role found by name: "+ROLE_USER.name());
         } catch (Exception e){
+            log.error(e.getMessage());
             throw new ApiException("An error occured, Please try again.");
         }
     }

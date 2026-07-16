@@ -101,7 +101,6 @@ public class UserRepositoryImpl implements UserRepository<User> {
                 .addValue("lastName", user.getLastName())
                 .addValue("email", user.getEmail())
                 .addValue("password", encoder.encode(user.getPassword()))
-                .addValue("enabled", user.isEnabled())
                 .addValue("nonLocked", user.isNotLocked())
                 ;
     }

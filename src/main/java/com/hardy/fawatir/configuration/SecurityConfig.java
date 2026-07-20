@@ -32,17 +32,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable) .cors(AbstractHttpConfigurer::disable);
-        http.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.authorizeHttpRequests(auth -> auth.requestMatchers(PUBLIC_URLS).permitAll());
-        http.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.DELETE,"/user/delete/**").hasAuthority("DELETE:USER"));
-        http.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.DELETE,"/customer/delete/**").hasAuthority("DELETE:CUSTOMER"));
-        http.exceptionHandling(ex -> ex
-                .accessDeniedHandler(customAccessDeniedHandler)
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
-        );
-        http.authorizeHttpRequests(r-> r.anyRequest().authenticated());
-
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
+                .authorizeHttpRequests(auth -> auth
+                .requestMatchers(PUBLIC_URLS).permitAll()
+                .requestMatchers(HttpMethod.DELETE,"/user/delete/**")
+                .hasAuthority("DELETE:USER")
+                .requestMatchers(HttpMethod.DELETE,"/customer/delete/**")
+                .hasAuthority("DELETE:CUSTOMER")
+                .anyRequest().authenticated());
         return http.build();
     }
 

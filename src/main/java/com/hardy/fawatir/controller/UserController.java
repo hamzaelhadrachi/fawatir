@@ -7,8 +7,10 @@ import com.hardy.fawatir.model.User;
 import com.hardy.fawatir.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,11 +24,13 @@ import static java.time.LocalTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 
 @Controller
 @RequestMapping(path = "/user")
 @RequiredArgsConstructor
+@Slf4j
 public class UserController {
 
     private final UserService userService;
@@ -35,18 +39,27 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid() LoginForm loginForm) {
-
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(), loginForm.getPassword()));
-        UserDTO userDTO = userService.getUserByEmail(loginForm.getEmail());
-
-        return ResponseEntity.ok().body(
-                HttpResponse.builder()
-                        .timeStamp(now().toString())
-                        .data(of("user",userDTO))
-                        .message("Login Successful!")
-                        .status(OK)
-                        .statusCode(OK.value())
-                        .build());
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(), loginForm.getPassword()));
+            UserDTO userDTO = userService.getUserByEmail(loginForm.getEmail());
+            return ResponseEntity.ok().body(
+                    HttpResponse.builder()
+                            .timeStamp(now().toString())
+                            .data(of("user", userDTO))
+                            .message("Login Successful!")
+                            .status(OK)
+                            .statusCode(OK.value())
+                            .build());
+        } catch (AuthenticationException exception) {
+            // Log the full exception to get more details, like the specific exception type (e.g., BadCredentialsException, DisabledException)
+            log.error("Authentication failed for user '{}'", loginForm.getEmail(), exception);
+            return ResponseEntity.status(UNAUTHORIZED).body(
+                    HttpResponse.builder()
+                            .timeStamp(now().toString())
+                            .message(exception.getMessage())
+                            .status(UNAUTHORIZED)
+                            .statusCode(UNAUTHORIZED.value()).build());
+        }
     }
 
     @PostMapping("/register")

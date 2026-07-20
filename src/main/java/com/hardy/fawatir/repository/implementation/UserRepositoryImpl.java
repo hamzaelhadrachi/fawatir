@@ -9,6 +9,7 @@ import com.hardy.fawatir.repository.UserRepository;
 import com.hardy.fawatir.rowmapper.UserRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -24,7 +25,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static com.hardy.fawatir.enumeration.RoleType.ROLE_USER;
@@ -49,7 +49,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         if(getEmailCount(user.getEmail().trim().toLowerCase()) > 0 ) throw new ApiException("Email Already in Use ! Please Try Using A Different Email");
         // Save new user
         try{
-            user.setEnabled(false);
+            user.setEnabled(true);
             user.setNotLocked(true);
             KeyHolder holder  = new GeneratedKeyHolder();
             SqlParameterSource parameterSource  = getSqlParameterSource(user);
@@ -108,6 +108,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
                 .addValue("email", user.getEmail())
                 .addValue("password", encoder.encode(user.getPassword()))
                 .addValue("nonLocked", user.isNotLocked())
+                .addValue("enabled", user.isEnabled())
                 ;
     }
     private String getVerificationUrl(String key, String type){
@@ -115,7 +116,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(@NonNull String email) throws UsernameNotFoundException {
         User user = getUserByEmail(email);
         if(user == null) {
             log.info("user {} not found in the database!", email);

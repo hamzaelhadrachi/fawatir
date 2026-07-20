@@ -23,7 +23,7 @@ public class UserRowMapper implements RowMapper<User> {
                 .enabled(rs.getBoolean("enabled"))
                 .isUsingMfa(rs.getBoolean("using_mfa"))
                 .isNotLocked(rs.getBoolean("non_locked"))
-                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                .createdAt(rs.getTimestamp("created_date").toLocalDateTime())
                 .build();
     }
 }

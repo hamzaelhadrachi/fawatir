@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.hardy.fawatir.enumeration.RoleType.ROLE_USER;
-import static com.hardy.fawatir.query.RoleQuery.INSERT_ROLE_TO_USER_QUERY;
-import static com.hardy.fawatir.query.RoleQuery.SELECT_ROLE_BY_NAME_QUERY;
+import static com.hardy.fawatir.query.RoleQuery.*;
+import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 
 @Repository
@@ -55,8 +55,8 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
     public void addRoleToUser(Long userId, String roleName) {
         log.info("Adding Role {} to User {}", roleName, userId);
         try{
-            Role role = jdbc.queryForObject(SELECT_ROLE_BY_NAME_QUERY, Map.of("name",roleName),new RoleRowMapper());
-            jdbc.update(INSERT_ROLE_TO_USER_QUERY, Map.of("userId",userId,"roleId",requireNonNull(role).getId()));
+            Role role = jdbc.queryForObject(SELECT_ROLE_BY_NAME_QUERY, of("name",roleName),new RoleRowMapper());
+            jdbc.update(INSERT_ROLE_TO_USER_QUERY, of("userId",userId,"roleId",requireNonNull(role).getId()));
         }catch(EmptyResultDataAccessException e){
             throw new ApiException("No role found by name: "+ROLE_USER.name());
         } catch (Exception e){
@@ -67,7 +67,15 @@ public class RoleRepositoryImpl implements RoleRepository<Role> {
 
     @Override
     public Role getRoleByUserId(Long userId) {
-        return null;
+        log.info("Fetching Role for User {}", userId);
+        try{
+            return jdbc.queryForObject(INSERT_ROLE_BY_ID_QUERY, of("id",userId),new RoleRowMapper());
+        }catch(EmptyResultDataAccessException e){
+            throw new ApiException("No role found by name: "+ROLE_USER.name());
+        } catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("An error occured, Please try again.");
+        }
     }
 
     @Override

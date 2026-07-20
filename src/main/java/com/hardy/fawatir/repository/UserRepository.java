@@ -13,4 +13,5 @@ public interface UserRepository <T extends User> {
     Boolean delete(int id);
 
     /* More Complex Operations */
+    T getUserByEmail(String email);
 }

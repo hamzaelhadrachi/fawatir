@@ -3,8 +3,10 @@ package com.hardy.fawatir.repository.implementation;
 import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.model.Role;
 import com.hardy.fawatir.model.User;
+import com.hardy.fawatir.model.UserPrincipal;
 import com.hardy.fawatir.repository.RoleRepository;
 import com.hardy.fawatir.repository.UserRepository;
+import com.hardy.fawatir.rowmapper.UserRowMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -13,6 +15,9 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -25,12 +30,13 @@ import java.util.UUID;
 import static com.hardy.fawatir.enumeration.RoleType.ROLE_USER;
 import static com.hardy.fawatir.enumeration.VerificationType.ACCOUNT;
 import static com.hardy.fawatir.query.UserQuery.*;
+import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserRepositoryImpl implements UserRepository<User> {
+public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
@@ -54,7 +60,7 @@ public class UserRepositoryImpl implements UserRepository<User> {
             // Send verification URL
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
             // Save verification URL to Verification Table
-            jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId",user.getId(),"url",verificationUrl));
+            jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, of("userId",user.getId(),"url",verificationUrl));
             // Send email to user with verification url
             //emailService.sendVerificationUrl(user.getFirstName(),user.getEmail(),verificationUrl,ACCOUNT);
 
@@ -93,7 +99,7 @@ public class UserRepositoryImpl implements UserRepository<User> {
     }
 
     private Integer getEmailCount(String email) {
-        return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, Map.of("email",email), Integer.class);
+        return jdbc.queryForObject(COUNT_USER_EMAIL_QUERY, of("email",email), Integer.class);
     }
     private SqlParameterSource getSqlParameterSource(User user) {
         return  new MapSqlParameterSource()
@@ -106,5 +112,30 @@ public class UserRepositoryImpl implements UserRepository<User> {
     }
     private String getVerificationUrl(String key, String type){
         return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/verify"+type+"/"+key).toUriString();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = getUserByEmail(email);
+        if(user == null) {
+            log.info("user {} not found in the database!", email);
+            throw new UsernameNotFoundException("user not found in the database!");
+        }else {
+            log.info("user {} found in the database", email);
+            return new UserPrincipal(user,roleRepository.getRoleByUserId(user.getId()).getPermission());
+        }
+    }
+
+    @Override
+    public User getUserByEmail(String email) {
+        try{
+            User user = jdbc.queryForObject(SELECT_USER_BY_IMAIL_QUERY,of("email",email), new UserRowMapper());
+            return user;
+        }catch (EmptyResultDataAccessException e){
+            throw new ApiException("No User found by Email: "+email);
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
     }
 }

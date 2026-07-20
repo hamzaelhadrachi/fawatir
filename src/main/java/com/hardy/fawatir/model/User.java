@@ -1,6 +1,7 @@
 package com.hardy.fawatir.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,7 +24,8 @@ public class User {
     private String firstName;
     @NotEmpty(message = "Last Name cannot be empty!")
     private String lastName;
-    @NotEmpty(message = "Please Enter a valid email address")
+    @NotEmpty(message = "Email cannot be empty")
+    @Email(message = "Please Enter a valid email address")
     private String email;
     @NotEmpty(message = "Password Name cannot be empty!")
     private String password;

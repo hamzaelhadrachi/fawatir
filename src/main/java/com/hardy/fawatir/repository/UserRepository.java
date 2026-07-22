@@ -1,5 +1,6 @@
 package com.hardy.fawatir.repository;
 
+import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.model.User;
 
 import java.util.Collection;
@@ -14,4 +15,8 @@ public interface UserRepository <T extends User> {
 
     /* More Complex Operations */
     T getUserByEmail(String email);
+
+    void sendVerificationCode(UserDTO userDTO);
+
+    User verifyCode(String email, String code);
 }

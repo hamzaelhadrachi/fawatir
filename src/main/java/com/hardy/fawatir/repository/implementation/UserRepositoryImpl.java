@@ -1,5 +1,6 @@
 package com.hardy.fawatir.repository.implementation;
 
+import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.model.Role;
 import com.hardy.fawatir.model.User;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,12 +34,18 @@ import static com.hardy.fawatir.enumeration.VerificationType.ACCOUNT;
 import static com.hardy.fawatir.query.UserQuery.*;
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.apache.commons.lang3.time.DateFormatUtils.format;
+import static org.apache.commons.lang3.time.DateUtils.addDays;
+
+;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class UserRepositoryImpl implements UserRepository<User>, UserDetailsService {
 
+    private static final String DATE_FORMAT = "yyyy-MM-dd hh:mm:ss";
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
@@ -139,4 +147,64 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             throw new ApiException("Error occurred please try again.");
         }
     }
+
+    @Override
+    public void sendVerificationCode(UserDTO userDTO) {
+        String expirationDate = format(addDays(new Date(), 1), DATE_FORMAT);
+        String verificationCode = randomAlphanumeric(6).toUpperCase();
+        try{
+            jdbc.update(DELETE_VERIFICATION_CODE_BY_USER_ID_QUERY,of("id",userDTO.getId()));
+
+            jdbc.update(INSERT_ACCOUNT_VERIFICATION_CODE_QUERY,
+                    of(
+                            "user_id",userDTO.getId(),
+                            "code",verificationCode,
+                            "expiration_date", expirationDate)
+            );
+            sendSMS(userDTO.getPhone(), "From: Fawatir \nVerification code \n"+verificationCode);
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
+    }
+
+    @Override
+    public User verifyCode(String email, String code) {
+        if(isVerificationCodeExpired(code)) throw new ApiException("This Code is Expired ! please log in again.");
+
+        try {
+            User userByCode = jdbc.queryForObject(SELECT_USER_BY_USER_CODE_QUERY,of("code",code),new UserRowMapper());
+            User userByEmail = jdbc.queryForObject(SELECT_USER_BY_IMAIL_QUERY,of("email",email),new UserRowMapper());
+
+            if(userByCode.getEmail().equalsIgnoreCase(userByEmail.getEmail())){
+                jdbc.update(DELETE_FROM_TWO_FACTOR_VERIFICATION_QUERY,of("code",code));
+                return userByCode;
+            }else {
+                throw new ApiException("Code invalid. Please try again");
+            }
+        }catch (EmptyResultDataAccessException e){
+            throw new ApiException("Unable to find Record");
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
+    }
+
+    private boolean isVerificationCodeExpired(String code) {
+        try {
+            return Boolean.TRUE.equals(jdbc.queryForObject(SELECT_EXPIRATION_DATE_BY_CODE_QUERY, of("code", code), Boolean.class));
+
+        }catch (EmptyResultDataAccessException e){
+            throw new ApiException("This code is not Valid. please log in again");
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
+    }
+
+    private void sendSMS(String phone, String s) {
+        log.info("Verification code {} was sent to phone number: {}",s,phone);
+    }
+
+
 }

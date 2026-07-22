@@ -1,11 +1,15 @@
 package com.hardy.fawatir.dto;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
 @NoArgsConstructor
 public class UserDTO {
 
@@ -22,4 +26,6 @@ public class UserDTO {
     private boolean isUsingMfa;
     private LocalDateTime createdAt;
     private String imageUrl;
+    private String roleName;
+    private String permissions;
 }

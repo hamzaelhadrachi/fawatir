@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -63,7 +64,7 @@ public class UserController {
         return ResponseEntity.created(getUri()).body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user",dto))
+                        .data(of("user", dto))
                         .message("user created")
                         .status(CREATED)
                         .statusCode(CREATED.value())
@@ -71,17 +72,33 @@ public class UserController {
         );
     }
 
+    @GetMapping("/profile")
+    public ResponseEntity<HttpResponse> getProfile(Authentication authentication) {
+        UserDTO userDTO = userService.getUserByEmail(authentication.getName());
+        log.info("Profile of the user is: {}", authentication.getPrincipal());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of(
+                                "user", userDTO
+                        ))
+                        .message("Profile Found!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
-        UserDTO userDTO = userService.verifyCode(email,code);
+        UserDTO userDTO = userService.verifyCode(email, code);
 
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of(
                                 "user", userDTO,
-                                "access_token",tokenProvider.createAccessToken(getUserPrincipal(userDTO)),
-                                "refresh_token",tokenProvider.createRefreshToken(getUserPrincipal(userDTO))
+                                "access_token", tokenProvider.createAccessToken(getUserPrincipal(userDTO)),
+                                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(userDTO))
                         ))
                         .message("Login Successful!")
                         .status(OK)
@@ -92,7 +109,7 @@ public class UserController {
     private URI getUri() {
         return URI.create(
                 ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/get/<userId>").toUriString()
-                );
+        );
     }
 
     private ResponseEntity<HttpResponse> sendResponse(UserDTO userDTO) {
@@ -101,8 +118,8 @@ public class UserController {
                         .timeStamp(now().toString())
                         .data(of(
                                 "user", userDTO,
-                                "access_token",tokenProvider.createAccessToken(getUserPrincipal(userDTO)),
-                                "refresh_token",tokenProvider.createRefreshToken(getUserPrincipal(userDTO))
+                                "access_token", tokenProvider.createAccessToken(getUserPrincipal(userDTO)),
+                                "refresh_token", tokenProvider.createRefreshToken(getUserPrincipal(userDTO))
                         ))
                         .message("Login Successful!")
                         .status(OK)

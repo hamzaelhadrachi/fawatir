@@ -1,0 +1,80 @@
+package com.hardy.fawatir.filter;
+
+import com.hardy.fawatir.provider.TokenProvider;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Arrays.asList;
+import static java.util.Optional.ofNullable;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class CustomAuthorizationFilter extends OncePerRequestFilter {
+
+    private static final String TOKEN_PREFIX = "Bearer ";
+    private static final String[] PUBLIC_ROUTES = {"/user/login","/user/register","/user/verify/code"};
+    private static final String HTTP_OPTIONS_METHOD = "OPTIONS";
+    private final TokenProvider tokenProvider;
+    protected static final String TOKEN_KEY = "token";
+    protected static final String EMAIL_KEY = "email";
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        try {
+            Map<String, String> values = getequestValues(request);
+            String token = getToken(request);
+
+            if (tokenProvider.isTokenValid(values.get(EMAIL_KEY),token)){
+                List<GrantedAuthority> authorities = tokenProvider.getAuthorities(values.get(TOKEN_KEY));
+                Authentication auth = tokenProvider.getAuthentication(values.get(EMAIL_KEY), authorities, request);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }else {
+                SecurityContextHolder.clearContext();
+            }
+            filterChain.doFilter(request,response);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            //processError(request,response,e);
+        }
+    }
+
+    private String getToken(HttpServletRequest request) {
+        return ofNullable(request.getHeader(AUTHORIZATION))
+                .filter(h -> h.startsWith(TOKEN_PREFIX))
+                .map(t -> t.replace(TOKEN_PREFIX, StringUtils.EMPTY)).get();
+    }
+
+    private Map<String, String> getequestValues(HttpServletRequest request) {
+        return Map.of(EMAIL_KEY, tokenProvider.getSubject(getToken(request),request), TOKEN_KEY, getToken(request));
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String header = request.getHeader(AUTHORIZATION);
+        String method = request.getMethod();
+        List<String> list = asList(PUBLIC_ROUTES);
+
+        return request.getHeader(AUTHORIZATION) == null ||
+                !request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX) ||
+                request.getMethod().equalsIgnoreCase(HTTP_OPTIONS_METHOD) ||
+                asList(PUBLIC_ROUTES).contains(request.getRequestURI());
+    }
+
+}

@@ -1,5 +1,6 @@
 package com.hardy.fawatir.configuration;
 
+import com.hardy.fawatir.filter.CustomAuthorizationFilter;
 import com.hardy.fawatir.handler.CustomAccessDeniedHandler;
 import com.hardy.fawatir.handler.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @RequiredArgsConstructor
@@ -29,6 +31,7 @@ public class SecurityConfig {
     private final BCryptPasswordEncoder encoder;
     private static final String[] PUBLIC_URLS = {"/user/login/**","/user/register/**","/user/verify/code/**"};
     private final UserDetailsService userDetailsService;
+    private final CustomAuthorizationFilter customAuthorizationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -46,7 +49,8 @@ public class SecurityConfig {
                 .hasAuthority("DELETE:USER")
                 .requestMatchers(HttpMethod.DELETE,"/customer/delete/**")
                 .hasAuthority("DELETE:CUSTOMER")
-                .anyRequest().authenticated());
+                .anyRequest().authenticated())
+                .addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

@@ -7,7 +7,9 @@ import com.auth0.jwt.exceptions.InvalidClaimException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.hardy.fawatir.model.UserPrincipal;
+import com.hardy.fawatir.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +29,7 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 
 @Component
+@RequiredArgsConstructor
 public class TokenProvider {
     private static final String GET_HARDY = "";
     private static final String CUSTOMER_MANAGEMENT_SERVICE = "";
@@ -37,6 +40,7 @@ public class TokenProvider {
 
     @Value("${jwt.secret}")
     private String secret;
+    private UserService  userService;
 
     public String createAccessToken(UserPrincipal userPrincipal){
         String[] claims = getClaimsFromUser(userPrincipal);
@@ -90,7 +94,7 @@ public class TokenProvider {
     }
 
     public Authentication getAuthentication(String email, List<GrantedAuthority> authorities, HttpServletRequest request){
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email,null ,authorities);
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userService.getUserByEmail(email),null ,authorities);
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
         return authenticationToken;

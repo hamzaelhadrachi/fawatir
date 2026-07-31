@@ -1,6 +1,7 @@
 package com.hardy.fawatir.controller;
 
 import com.hardy.fawatir.dto.UserDTO;
+import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.form.LoginForm;
 import com.hardy.fawatir.model.HttpResponse;
 import com.hardy.fawatir.model.User;
@@ -8,14 +9,16 @@ import com.hardy.fawatir.model.UserPrincipal;
 import com.hardy.fawatir.provider.TokenProvider;
 import com.hardy.fawatir.service.RoleService;
 import com.hardy.fawatir.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -23,6 +26,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 
 import static com.hardy.fawatir.dto.mapper.UserDTOMapper.toUser;
+import static com.hardy.fawatir.utils.ExceptionUtils.processError;
 import static java.time.LocalTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpStatus.*;
@@ -38,23 +42,15 @@ public class UserController {
     private final RoleService roleService;
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
+    private final HttpServletRequest request;
+    private final HttpServletResponse response;
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid() LoginForm loginForm) {
-        try {
-            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginForm.getEmail(), loginForm.getPassword()));
-            UserDTO userDTO = userService.getUserByEmail(loginForm.getEmail());
-            return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
-        } catch (AuthenticationException exception) {
-            // Log the full exception to get more details, like the specific exception type (e.g., BadCredentialsException, DisabledException)
-            log.error("Authentication failed for user '{}'", loginForm.getEmail(), exception);
-            return ResponseEntity.status(UNAUTHORIZED).body(
-                    HttpResponse.builder()
-                            .timeStamp(now().toString())
-                            .message(exception.getMessage())
-                            .status(UNAUTHORIZED)
-                            .statusCode(UNAUTHORIZED.value()).build());
-        }
+        Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
+        log.info(String.valueOf(authentication));
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
     }
 
     @PostMapping("/register")
@@ -128,7 +124,7 @@ public class UserController {
     }
 
     private UserPrincipal getUserPrincipal(UserDTO userDTO) {
-        return new UserPrincipal(toUser(userService.getUserByEmail(userDTO.getEmail())), roleService.getRoleByUserId(userDTO.getId()).getPermission());
+        return new UserPrincipal(toUser(userService.getUserByEmail(userDTO.getEmail())), roleService.getRoleByUserId(userDTO.getId()));
     }
 
     private ResponseEntity<HttpResponse> sendVerificationCode(UserDTO userDTO) {
@@ -141,5 +137,30 @@ public class UserController {
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
+    }
+
+    @RequestMapping("/error")
+    public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {
+        return ResponseEntity.badRequest().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .message("An error occurred! no mapping for the " + request.getMethod() + " request PATH on the server")
+                        .status(BAD_REQUEST)
+                        .statusCode(BAD_REQUEST.value())
+                        .build());
+    }
+
+    private Authentication authenticate(@NotEmpty String email, @NotEmpty String password) {
+        try {
+            Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+            return authenticate;
+        } catch (Exception e) {
+            processError(request, response, e);
+            throw new ApiException(e.getMessage());
+        }
+    }
+
+    private UserDTO getAuthenticatedUser(Authentication authentication) {
+        return ((UserPrincipal) authentication.getPrincipal()).getUser();
     }
 }

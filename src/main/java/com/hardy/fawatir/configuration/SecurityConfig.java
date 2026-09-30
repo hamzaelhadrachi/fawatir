@@ -29,7 +29,9 @@ public class SecurityConfig {
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
     private  final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final BCryptPasswordEncoder encoder;
-    private static final String[] PUBLIC_URLS = {"/user/login/**","/user/register/**","/user/verify/code/**"};
+    private static final String[] PUBLIC_URLS = {
+            "/user/login/**","/user/register/**","/user/verify/code/**","/user/resetpassword/**","/user/verify/password/**","/user/resetPassword/**"
+    };
     private final UserDetailsService userDetailsService;
     private final CustomAuthorizationFilter customAuthorizationFilter;
 
@@ -44,12 +46,13 @@ public class SecurityConfig {
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers(PUBLIC_URLS).permitAll()
-                .requestMatchers(HttpMethod.DELETE,"/user/delete/**")
-                .hasAuthority("DELETE:USER")
-                .requestMatchers(HttpMethod.DELETE,"/customer/delete/**")
-                .hasAuthority("DELETE:CUSTOMER")
-                .anyRequest().authenticated())
+                    .requestMatchers(PUBLIC_URLS).permitAll()
+                    .requestMatchers(HttpMethod.DELETE,"/user/delete/**")
+                    .hasAuthority("DELETE:USER")
+                    .requestMatchers(HttpMethod.DELETE,"/customer/delete/**")
+                    .hasAuthority("DELETE:CUSTOMER")
+                    .anyRequest().authenticated()
+                )
                 .addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

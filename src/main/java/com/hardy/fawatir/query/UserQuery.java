@@ -12,4 +12,12 @@ public class UserQuery {
     public static final String SELECT_USER_BY_USER_CODE_QUERY = "SELECT * FROM Users WHERE id = (SELECT user_id FROM TwoFactorVerification WHERE code = :code)";
     public static final String DELETE_FROM_TWO_FACTOR_VERIFICATION_QUERY = "DELETE FROM TwoFactorVerification WHERE code = :code";
     public static final String SELECT_EXPIRATION_DATE_BY_CODE_QUERY = "SELECT expiration_date < NOW() FROM TwoFactorVerification WHERE code = :code";
+    public static final String DELETE_PASSWORD_VERIFICATION_BY_USER_ID_QUERY = "DELETE FROM Resetpasswordverification WHERE user_id = :user_id";
+    public static final String INSERT_PASSWORD_VERIFICATION_QUERY = "INSERT INTO Resetpasswordverification (user_id,url,expiration_date) VALUES (:user_id, :url, :expiration_date)";
+    public static final String SELECT_EXPIRATION_BY_URL_QUERY = "SELECT expiration_date < NOW() FROM Resetpasswordverification WHERE url = :url";
+    public static final String SELECT_USER_BY_PASSWORD_URL_QUERY = "SELECT * FROM Users WHERE id = (SELECT user_id FROM Resetpasswordverification WHERE url = :url)";
+    public static final String DELETE_USER_FROM_PASSWORD_VERIFICATION_QUERY = "";
+    public static final String UPDATE_USER_PASSWORD_BY_URL_QUERY = "UPDATE Users set password = :password where id= (SELECT user_id FROM Resetpasswordverification WHERE url = :url)";
+    public static final String DELETE_VERIFICATION_BY_URL_QUERY = "DELETE FROM Resetpasswordverification WHERE url = :url";
+
 }

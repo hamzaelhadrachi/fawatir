@@ -31,7 +31,7 @@ public class SecurityConfig {
     private final BCryptPasswordEncoder encoder;
     private static final String[] PUBLIC_URLS = {
             "/user/login/**","/user/register/**","/user/verify/code/**","/user/resetpassword/**","/user/verify/password/**","/user/resetPassword/**",
-            "/user/verify/account/**"
+            "/user/verify/account/**", "/user/refresh/token/**"
     };
     private final UserDetailsService userDetailsService;
     private final CustomAuthorizationFilter customAuthorizationFilter;

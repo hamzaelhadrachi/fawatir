@@ -193,6 +193,45 @@ public class UserController {
                         .build());
     }
 
+    @GetMapping("/refresh/token")
+    public ResponseEntity<HttpResponse> refreshToken(HttpServletRequest request) {
+
+        if (isHeaderAndTokenValid(request)){
+            String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
+            UserDTO userDTO = userService.getUserByEmail(tokenProvider.getSubject(token,request));
+
+            return ResponseEntity.ok().body(
+                    HttpResponse.builder()
+                            .timeStamp(now().toString())
+                            .data(of(
+                                    "user", userDTO,
+                                    "access_token", tokenProvider.createAccessToken(getUserPrincipal(userDTO)),
+                                    "refresh_token", token
+                            ))
+                            .message("Token Refreshed!")
+                            .status(OK)
+                            .statusCode(OK.value())
+                            .build());
+        }
+
+        return ResponseEntity.badRequest().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .message("Token missing or invalid !")
+                        .developerMessage("Token missing or invalid !")
+                        .status(BAD_REQUEST)
+                        .statusCode(BAD_REQUEST.value())
+                        .build());
+    }
+
+    private boolean isHeaderAndTokenValid(HttpServletRequest request) {
+        return request.getHeader(AUTHORIZATION) != null
+                && request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX)
+                && tokenProvider.isTokenValid(tokenProvider.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()) , request ),
+                request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()));
+
+    }
+
 
     @RequestMapping("/error")
     public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {

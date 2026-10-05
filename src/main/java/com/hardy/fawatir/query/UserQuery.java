@@ -19,5 +19,7 @@ public class UserQuery {
     public static final String DELETE_USER_FROM_PASSWORD_VERIFICATION_QUERY = "";
     public static final String UPDATE_USER_PASSWORD_BY_URL_QUERY = "UPDATE Users set password = :password where id= (SELECT user_id FROM Resetpasswordverification WHERE url = :url)";
     public static final String DELETE_VERIFICATION_BY_URL_QUERY = "DELETE FROM Resetpasswordverification WHERE url = :url";
+    public static final String SELECT_USER_BY_ACCOUNT_URL_QUERY = "SELECT * FROM Users WHERE id = (SELECT user_id FROM accountverification WHERE url = :url)";
+    public static final String UPDATE_USER_ENABLED_QUERY = "UPDATE Users set enabled = :enabled where id = :id";
 
 }

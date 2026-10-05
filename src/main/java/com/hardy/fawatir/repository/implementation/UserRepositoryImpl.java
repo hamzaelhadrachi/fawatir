@@ -56,7 +56,7 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         if(getEmailCount(user.getEmail().trim().toLowerCase()) > 0 ) throw new ApiException("Email Already in Use ! Please Try Using A Different Email");
         // Save new user
         try{
-            user.setEnabled(true);
+            user.setEnabled(false);
             user.setNotLocked(true);
             KeyHolder holder  = new GeneratedKeyHolder();
             SqlParameterSource parameterSource  = getSqlParameterSource(user);
@@ -234,6 +234,21 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
 
 
         }catch (Exception e){
+            throw new ApiException("Error occurred please try again.");
+        }
+    }
+
+    @Override
+    public User verifyAccountKey(String key) {
+        try {
+            User user = jdbc.queryForObject(SELECT_USER_BY_ACCOUNT_URL_QUERY, of("url", getVerificationUrl(key,ACCOUNT.getType())), new UserRowMapper());
+            jdbc.update(UPDATE_USER_ENABLED_QUERY, of("enabled", true, "id", user.getId()));
+            // delete url after verification maybe
+            return user;
+        }catch (EmptyResultDataAccessException e){
+            throw new ApiException("This link is not valid !");
+        }catch (Exception e){
+            log.error(e.getMessage());
             throw new ApiException("Error occurred please try again.");
         }
     }

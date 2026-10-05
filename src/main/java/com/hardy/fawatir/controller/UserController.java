@@ -29,6 +29,7 @@ import static com.hardy.fawatir.dto.mapper.UserDTOMapper.toUser;
 import static com.hardy.fawatir.utils.ExceptionUtils.processError;
 import static java.time.LocalTime.now;
 import static java.util.Map.of;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
 
 
@@ -44,6 +45,7 @@ public class UserController {
     private final TokenProvider tokenProvider;
     private final HttpServletRequest request;
     private final HttpServletResponse response;
+    private static final String TOKEN_PREFIX = "Bearer ";
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid() LoginForm loginForm) {
@@ -176,6 +178,21 @@ public class UserController {
                         .statusCode(OK.value())
                         .build());
     }
+
+    @GetMapping("/verify/account/{key}")
+    public ResponseEntity<HttpResponse> verifyAccount(@PathVariable("key") String key) {
+
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .message(
+                                userService.verifyAccoutKey(key).isEnabled() ? "Account Already verified !" : "Account Verified"
+                                )
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
 
     @RequestMapping("/error")
     public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {

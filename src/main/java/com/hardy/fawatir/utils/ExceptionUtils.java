@@ -27,11 +27,15 @@ public class ExceptionUtils {
         if(
                 exception instanceof ServletException || exception instanceof DisabledException ||
                 exception instanceof LockedException || exception instanceof InvalidClaimException ||
-                exception instanceof BadCredentialsException || exception instanceof TokenExpiredException
+                exception instanceof BadCredentialsException
         ){
             HttpResponse httpResponse = getHttpResponse(response,exception.getMessage(), BAD_REQUEST);
             writeResponse(response, httpResponse);
-        } else {
+        }else if (exception instanceof TokenExpiredException){
+            HttpResponse httpResponse = getHttpResponse(response,exception.getMessage(), UNAUTHORIZED);
+            writeResponse(response, httpResponse);
+        }
+        else {
             HttpResponse httpResponse = getHttpResponse(response,"An Error occurred, please try again", INTERNAL_SERVER_ERROR);
             writeResponse(response, httpResponse);
         }

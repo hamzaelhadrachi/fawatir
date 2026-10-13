@@ -32,8 +32,8 @@ import static java.util.stream.Collectors.toList;
 @Component
 @RequiredArgsConstructor
 public class TokenProvider {
-    private static final String GET_HARDY = "";
-    private static final String CUSTOMER_MANAGEMENT_SERVICE = "";
+    private static final String GET_HARDY = "Hardy_Dev";
+    private static final String CUSTOMER_MANAGEMENT_SERVICE = "Fawatir_By_Hardy";
     public static final String AUTHORITIES = "Authorities";
     public static final long ACCESS_TOKEN_EXPIRATION_TIME = 1_800_000;
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 432_000_000;

@@ -1,9 +1,11 @@
 package com.hardy.fawatir.form;
 
 import jakarta.validation.constraints.NotEmpty;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class LoginForm {
     @NotEmpty
     private String email;

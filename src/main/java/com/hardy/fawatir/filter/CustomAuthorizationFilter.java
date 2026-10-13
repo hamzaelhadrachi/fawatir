@@ -39,12 +39,11 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
-            Map<String, String> values = getequestValues(request);
             String token = getToken(request);
-
-            if (tokenProvider.isTokenValid(values.get(EMAIL_KEY),token)){
-                List<GrantedAuthority> authorities = tokenProvider.getAuthorities(values.get(TOKEN_KEY));
-                Authentication auth = tokenProvider.getAuthentication(values.get(EMAIL_KEY), authorities, request);
+            Long userId = getUserId(request);
+            if (tokenProvider.isTokenValid(userId,token)){
+                List<GrantedAuthority> authorities = tokenProvider.getAuthorities(token);
+                Authentication auth = tokenProvider.getAuthentication(userId, authorities, request);
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }else {
                 SecurityContextHolder.clearContext();
@@ -62,16 +61,12 @@ public class CustomAuthorizationFilter extends OncePerRequestFilter {
                 .map(t -> t.replace(TOKEN_PREFIX, StringUtils.EMPTY)).get();
     }
 
-    private Map<String, String> getequestValues(HttpServletRequest request) {
-        return Map.of(EMAIL_KEY, tokenProvider.getSubject(getToken(request),request), TOKEN_KEY, getToken(request));
+    private Long getUserId(HttpServletRequest request) {
+        return  tokenProvider.getSubject(getToken(request),request);
     }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String header = request.getHeader(AUTHORIZATION);
-        String method = request.getMethod();
-        List<String> list = asList(PUBLIC_ROUTES);
-
         return request.getHeader(AUTHORIZATION) == null ||
                 !request.getHeader(AUTHORIZATION).startsWith(TOKEN_PREFIX) ||
                 request.getMethod().equalsIgnoreCase(HTTP_OPTIONS_METHOD) ||

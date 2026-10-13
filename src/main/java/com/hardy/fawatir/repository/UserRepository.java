@@ -1,6 +1,7 @@
 package com.hardy.fawatir.repository;
 
 import com.hardy.fawatir.dto.UserDTO;
+import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.User;
 
 import java.util.Collection;
@@ -9,7 +10,7 @@ public interface UserRepository <T extends User> {
     /* Basic CURD Operations */
     T create(T data);
     Collection<T> list(int page, int pageSize);
-    T get(int id);
+    T get(Long id);
     T update(int id, T data);
     Boolean delete(int id);
 
@@ -27,4 +28,6 @@ public interface UserRepository <T extends User> {
     void renewPassword(String key, String password, String confirmPassword);
 
     T verifyAccountKey(String key);
+
+    T updateUserDetails(UpdateForm user);
 }

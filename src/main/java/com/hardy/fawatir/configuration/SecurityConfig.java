@@ -10,6 +10,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -27,10 +28,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final CustomAccessDeniedHandler customAccessDeniedHandler;
-    private  final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
     private final BCryptPasswordEncoder encoder;
     private static final String[] PUBLIC_URLS = {
-            "/user/login/**","/user/register/**","/user/verify/code/**","/user/resetpassword/**","/user/verify/password/**","/user/resetPassword/**",
+            "/user/login/**", "/user/register/**", "/user/verify/code/**", "/user/resetpassword/**", "/user/verify/password/**", "/user/resetPassword/**",
             "/user/verify/account/**", "/user/refresh/token/**"
     };
     private final UserDetailsService userDetailsService;
@@ -40,19 +41,20 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
+                .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .accessDeniedHandler(customAccessDeniedHandler)
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(PUBLIC_URLS).permitAll()
-                    .requestMatchers(HttpMethod.DELETE,"/user/delete/**")
-                    .hasAuthority("DELETE:USER")
-                    .requestMatchers(HttpMethod.DELETE,"/customer/delete/**")
-                    .hasAuthority("DELETE:CUSTOMER")
-                    .anyRequest().authenticated()
+                        .requestMatchers(PUBLIC_URLS).permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/user/delete/**")
+                        .hasAuthority("DELETE:USER")
+                        .requestMatchers(HttpMethod.DELETE, "/customer/delete/**")
+                        .hasAuthority("DELETE:CUSTOMER")
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .anyRequest().authenticated()
                 )
                 .addFilterBefore(customAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

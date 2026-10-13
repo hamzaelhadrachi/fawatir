@@ -3,6 +3,7 @@ package com.hardy.fawatir.repository.implementation;
 import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.enumeration.VerificationType;
 import com.hardy.fawatir.exception.ApiException;
+import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.Role;
 import com.hardy.fawatir.model.User;
 import com.hardy.fawatir.model.UserPrincipal;
@@ -91,8 +92,15 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
     }
 
     @Override
-    public User get(int id) {
-        return null;
+    public User get(Long id) {
+        try{
+            return jdbc.queryForObject(SELECT_USER_BY_ID_QUERY,of("id",id), new UserRowMapper());
+        }catch (EmptyResultDataAccessException e){
+            throw new ApiException("No User found by ID: "+id);
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
     }
 
     @Override
@@ -251,6 +259,29 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             log.error(e.getMessage());
             throw new ApiException("Error occurred please try again.");
         }
+    }
+
+    @Override
+    public User updateUserDetails(UpdateForm user) {
+        try {
+            jdbc.update(UPDATE_USER_DETAILS_QUERY, getUserDetailsSqlParameterSource(user));
+            return get(user.getId());
+        }catch (EmptyResultDataAccessException e){
+            throw new ApiException("This Link is not Valid. please try to reset your password again");
+        }
+    }
+
+    private SqlParameterSource getUserDetailsSqlParameterSource(UpdateForm user) {
+        return  new MapSqlParameterSource()
+                .addValue("id",user.getId())
+                .addValue("firstName", user.getFirstName())
+                .addValue("lastName", user.getLastName())
+                .addValue("email", user.getEmail())
+                .addValue("phone", user.getPhone())
+                .addValue("address", user.getAddress())
+                .addValue("title", user.getTitle())
+                .addValue("bio", user.getBio())
+                ;
     }
 
     private boolean isLinkExpired(String key, VerificationType password) {

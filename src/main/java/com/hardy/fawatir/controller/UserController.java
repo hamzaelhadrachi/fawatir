@@ -3,6 +3,7 @@ package com.hardy.fawatir.controller;
 import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.form.LoginForm;
+import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.HttpResponse;
 import com.hardy.fawatir.model.User;
 import com.hardy.fawatir.model.UserPrincipal;
@@ -24,9 +25,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.concurrent.TimeUnit;
 
 import static com.hardy.fawatir.dto.mapper.UserDTOMapper.toUser;
-import static com.hardy.fawatir.utils.ExceptionUtils.processError;
+import static com.hardy.fawatir.utils.UserUtils.getAuthenticatedUser;
+import static com.hardy.fawatir.utils.UserUtils.getLoggedInUser;
 import static java.time.LocalTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -51,7 +54,7 @@ public class UserController {
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid() LoginForm loginForm) {
         Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
         log.info(String.valueOf(authentication));
-        UserDTO userDTO = getAuthenticatedUser(authentication);
+        UserDTO userDTO = getLoggedInUser(authentication);
         return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
     }
 
@@ -72,7 +75,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<HttpResponse> getProfile(Authentication authentication) {
-        UserDTO userDTO = userService.getUserByEmail(authentication.getName());
+        UserDTO userDTO = userService.getUserByEmail(getAuthenticatedUser(authentication).getEmail());
         log.info("Profile of the user is: {}", authentication.getPrincipal());
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
@@ -81,6 +84,22 @@ public class UserController {
                                 "user", userDTO
                         ))
                         .message("Profile Found!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
+    @PatchMapping("/update")
+    public ResponseEntity<HttpResponse> userupdate(@RequestBody @Valid UpdateForm user) throws InterruptedException {
+        TimeUnit.MILLISECONDS.sleep(3);
+        UserDTO userDTO = userService.updateUserDetails(user);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of(
+                                "user", userDTO
+                        ))
+                        .message("User updated !")
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
@@ -198,7 +217,7 @@ public class UserController {
 
         if (isHeaderAndTokenValid(request)){
             String token = request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length());
-            UserDTO userDTO = userService.getUserByEmail(tokenProvider.getSubject(token,request));
+            UserDTO userDTO = userService.getuserById(tokenProvider.getSubject(token,request));
 
             return ResponseEntity.ok().body(
                     HttpResponse.builder()
@@ -249,12 +268,10 @@ public class UserController {
             Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
             return authenticate;
         } catch (Exception e) {
-            processError(request, response, e);
+            //processError(request, response, e);
             throw new ApiException(e.getMessage());
         }
     }
 
-    private UserDTO getAuthenticatedUser(Authentication authentication) {
-        return ((UserPrincipal) authentication.getPrincipal()).getUser();
-    }
+
 }

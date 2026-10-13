@@ -1,6 +1,7 @@
 package com.hardy.fawatir.service.implementation;
 
 import com.hardy.fawatir.dto.UserDTO;
+import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.Role;
 import com.hardy.fawatir.model.User;
 import com.hardy.fawatir.repository.RoleRepository;
@@ -57,6 +58,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO verifyAccoutKey(String key) {
         return mapToUserDTO(userRepository.verifyAccountKey(key));
+    }
+
+    @Override
+    public UserDTO updateUserDetails(UpdateForm user) {
+        return mapToUserDTO(userRepository.updateUserDetails(user));
+    }
+
+    @Override
+    public UserDTO getuserById(Long userId) {
+        return mapToUserDTO(userRepository.get(userId));
     }
 
     private UserDTO mapToUserDTO(User user){

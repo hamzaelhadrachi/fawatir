@@ -75,6 +75,11 @@ public class UserServiceImpl implements UserService {
         userRepository.updatePassword(id, currentPassword, newPassword, confirmNewPassword);
     }
 
+    @Override
+    public void updateUserRole(Long id, String roleName) {
+        roleRepository.updateUserRole(id, roleName);
+    }
+
     private UserDTO mapToUserDTO(User user){
         return fromUser(user,roleRepository.getRoleByUserId(user.getId()));
     }

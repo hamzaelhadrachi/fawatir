@@ -82,7 +82,8 @@ public class UserController {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of(
-                                "user", userDTO
+                                "user", userDTO,
+                                "roles", roleService.getRoles()
                         ))
                         .message("Profile Found!")
                         .status(OK)
@@ -260,6 +261,20 @@ public class UserController {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .message("Password Updated!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
+    @PatchMapping("/update/role/{roleName}")
+    public ResponseEntity<HttpResponse> updateUserRole(Authentication authentication, @PathVariable("roleName") String roleName) {
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updateUserRole(userDTO.getId(), roleName);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .message("Role Updated!")
                         .status(OK)
                         .statusCode(OK.value())
                         .build());

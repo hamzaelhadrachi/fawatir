@@ -8,7 +8,7 @@ public interface RoleRepository <T extends Role> {
 
     /* Basic CURD Operations */
     T create(T data);
-    Collection<T> list(int page, int pageSize);
+    Collection<T> list();
     T get(int id);
     T update(int id, T data);
     Boolean delete(int id);

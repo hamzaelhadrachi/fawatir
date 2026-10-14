@@ -4,6 +4,7 @@ import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.form.LoginForm;
 import com.hardy.fawatir.form.UpdateForm;
+import com.hardy.fawatir.form.UpdatePasswordForm;
 import com.hardy.fawatir.model.HttpResponse;
 import com.hardy.fawatir.model.User;
 import com.hardy.fawatir.model.UserPrincipal;
@@ -249,6 +250,19 @@ public class UserController {
                 && tokenProvider.isTokenValid(tokenProvider.getSubject(request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()) , request ),
                 request.getHeader(AUTHORIZATION).substring(TOKEN_PREFIX.length()));
 
+    }
+
+    @PatchMapping("/update/password")
+    public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updatePassword(userDTO.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmNewPassword());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .message("Password Updated!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
     }
 
 

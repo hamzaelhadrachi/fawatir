@@ -4,6 +4,7 @@ import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.User;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 
 public interface UserService {
 
@@ -26,4 +27,6 @@ public interface UserService {
     UserDTO updateUserDetails(UpdateForm user);
 
     UserDTO getuserById(Long userId);
+
+    void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
 }

@@ -295,6 +295,19 @@ public class UserController {
                         .build());
     }
 
+    @PatchMapping("/togglemfa")
+    public ResponseEntity<HttpResponse> toggleMfa(Authentication authentication) {
+        UserDTO userDto = userService.toggleMfa(getAuthenticatedUser(authentication).getEmail());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", userDto, "roles", roleService.getRoles()))
+                        .message("Multy Factor Authentication Updated!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
 
     @RequestMapping("/error")
     public ResponseEntity<HttpResponse> handleError(HttpServletRequest request) {

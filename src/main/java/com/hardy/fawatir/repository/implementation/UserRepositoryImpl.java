@@ -35,6 +35,7 @@ import static com.hardy.fawatir.query.UserQuery.*;
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.time.DateFormatUtils.format;
 import static org.apache.commons.lang3.time.DateUtils.addDays;
 
@@ -295,6 +296,23 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         try {
             jdbc.update(UPDATE_USER_SETTINGS_QUERY, of("userId", id, "enabled",enabled,"notLocked",notLocked));
 
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
+    }
+
+    @Override
+    public User toggleMfa(String email) {
+        User user = getUserByEmail(email);
+
+        if (isBlank(user.getPhone())){
+            throw new ApiException("You need a phone number for multy factor Authentication !");
+        }
+        user.setUsingMfa(!user.isUsingMfa());
+        try {
+            jdbc.update(TOGGLE_USER_MFA_QUERY, of("email",email, "isUsingMfa", user.isUsingMfa()));
+            return user;
         }catch (Exception e){
             log.error(e.getMessage());
             throw new ApiException("Error occurred please try again.");

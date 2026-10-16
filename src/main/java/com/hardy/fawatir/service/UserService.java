@@ -34,4 +34,6 @@ public interface UserService {
     void updateUserRole(Long id, String roleName);
 
     void updateAccountSettings(Long id, @NotNull(message = "Enabled cannot be null or empty !") Boolean enabled, @NotNull(message = "Not Locked cannot be null or empty !") Boolean notLocked);
+
+    UserDTO toggleMfa(String email);
 }

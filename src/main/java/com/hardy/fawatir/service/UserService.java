@@ -5,6 +5,7 @@ import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 public interface UserService {
 
@@ -31,4 +32,6 @@ public interface UserService {
     void updatePassword(Long id, String currentPassword, String newPassword, String confirmNewPassword);
 
     void updateUserRole(Long id, String roleName);
+
+    void updateAccountSettings(Long id, @NotNull(message = "Enabled cannot be null or empty !") Boolean enabled, @NotNull(message = "Not Locked cannot be null or empty !") Boolean notLocked);
 }

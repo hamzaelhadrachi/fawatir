@@ -290,6 +290,17 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
         }
     }
 
+    @Override
+    public void updateAccountSettings(Long id, Boolean enabled, Boolean notLocked) {
+        try {
+            jdbc.update(UPDATE_USER_SETTINGS_QUERY, of("userId", id, "enabled",enabled,"notLocked",notLocked));
+
+        }catch (Exception e){
+            log.error(e.getMessage());
+            throw new ApiException("Error occurred please try again.");
+        }
+    }
+
     private SqlParameterSource getUserDetailsSqlParameterSource(UpdateForm user) {
         return  new MapSqlParameterSource()
                 .addValue("id",user.getId())

@@ -3,6 +3,7 @@ package com.hardy.fawatir.controller;
 import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.form.LoginForm;
+import com.hardy.fawatir.form.UpdateAccountSettingsForm;
 import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.form.UpdatePasswordForm;
 import com.hardy.fawatir.model.HttpResponse;
@@ -275,6 +276,20 @@ public class UserController {
                         .timeStamp(now().toString())
                         .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
                         .message("Role Updated!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
+    @PatchMapping("/update/accountSettings")
+    public ResponseEntity<HttpResponse> updateAccountSettings(Authentication authentication, @RequestBody @Valid UpdateAccountSettingsForm form) {
+        UserDTO userDTO = getAuthenticatedUser(authentication);
+        userService.updateAccountSettings(userDTO.getId(), form.getEnabled(),form.getNotLocked());
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .message("Account Settings Updated!")
                         .status(OK)
                         .statusCode(OK.value())
                         .build());

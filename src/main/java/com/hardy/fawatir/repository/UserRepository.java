@@ -3,6 +3,7 @@ package com.hardy.fawatir.repository;
 import com.hardy.fawatir.dto.UserDTO;
 import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.model.User;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collection;
 
@@ -36,4 +37,6 @@ public interface UserRepository <T extends User> {
     void updateAccountSettings(Long id, Boolean enabled, Boolean notLocked);
 
     T toggleMfa(String email);
+
+    void updateImage(UserDTO userDto, MultipartFile image);
 }

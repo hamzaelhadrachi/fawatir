@@ -6,6 +6,7 @@ import com.hardy.fawatir.model.User;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
 
@@ -36,4 +37,6 @@ public interface UserService {
     void updateAccountSettings(Long id, @NotNull(message = "Enabled cannot be null or empty !") Boolean enabled, @NotNull(message = "Not Locked cannot be null or empty !") Boolean notLocked);
 
     UserDTO toggleMfa(String email);
+
+    void updateImage(UserDTO userDto, MultipartFile image);
 }

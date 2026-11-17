@@ -24,14 +24,20 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import static com.hardy.fawatir.enumeration.RoleType.ROLE_USER;
 import static com.hardy.fawatir.enumeration.VerificationType.ACCOUNT;
 import static com.hardy.fawatir.enumeration.VerificationType.PASSWORD;
 import static com.hardy.fawatir.query.UserQuery.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.util.Map.of;
 import static java.util.Objects.requireNonNull;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
@@ -318,6 +324,39 @@ public class UserRepositoryImpl implements UserRepository<User>, UserDetailsServ
             throw new ApiException("Error occurred please try again.");
         }
     }
+
+    @Override
+    public void updateImage(UserDTO userDto, MultipartFile image) {
+        String imageUrl = setImageUrl(userDto.getEmail());
+        userDto.setImageUrl(imageUrl);
+        saveImage(userDto.getEmail(),image);
+        jdbc.update(UPDATE_USER_IMAGE_QUERY, of("imageUrl",imageUrl, "id", userDto.getId()));
+    }
+
+    private String setImageUrl(String email) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path("/user/image/"+email+".png").toUriString();
+    }
+
+    private void saveImage(String email, MultipartFile image) {
+        Path fileStorageLocation = Paths.get(System.getProperty("user.home")+"/Downloads/images/").toAbsolutePath().normalize();
+        if (!Files.exists(fileStorageLocation)) {
+            try {
+                Files.createDirectories(fileStorageLocation);
+            }catch (Exception e){
+                log.error(e.getMessage());
+                throw new ApiException("Unable to create Directory to save image");
+            }
+            log.info("Directories: {} Have Been created", fileStorageLocation);
+        }
+        try {
+            Files.copy(image.getInputStream(),fileStorageLocation.resolve(email+".png"), REPLACE_EXISTING);
+        }catch (IOException e) {
+            log.error(e.getMessage());
+            throw new ApiException(e.getMessage());
+        }
+        log.info("File Saved Successfully");
+    }
+
 
     private SqlParameterSource getUserDetailsSqlParameterSource(UpdateForm user) {
         return  new MapSqlParameterSource()

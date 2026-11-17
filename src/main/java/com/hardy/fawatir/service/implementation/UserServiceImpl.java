@@ -9,6 +9,7 @@ import com.hardy.fawatir.repository.UserRepository;
 import com.hardy.fawatir.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import static com.hardy.fawatir.dto.mapper.UserDTOMapper.fromUser;
 
@@ -88,6 +89,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDTO toggleMfa(String email) {
         return mapToUserDTO(userRepository.toggleMfa(email));
+    }
+
+    @Override
+    public void updateImage(UserDTO userDto, MultipartFile image) {
+        userRepository.updateImage(userDto, image);
     }
 
     private UserDTO mapToUserDTO(User user){

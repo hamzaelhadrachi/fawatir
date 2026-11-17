@@ -24,9 +24,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import static com.hardy.fawatir.dto.mapper.UserDTOMapper.toUser;
@@ -36,9 +40,10 @@ import static java.time.LocalTime.now;
 import static java.util.Map.of;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 
 
-@Controller
+@RestController
 @RequestMapping(path = "/user")
 @RequiredArgsConstructor
 @Slf4j
@@ -306,6 +311,25 @@ public class UserController {
                         .status(OK)
                         .statusCode(OK.value())
                         .build());
+    }
+
+    @PatchMapping("/update/image")
+    public ResponseEntity<HttpResponse> updateImage(Authentication authentication, @RequestParam("image") MultipartFile image) {
+        UserDTO userDto = getAuthenticatedUser(authentication);
+        userService.updateImage(userDto,image);
+        return ResponseEntity.ok().body(
+                HttpResponse.builder()
+                        .timeStamp(now().toString())
+                        .data(of("user", userDto, "roles", roleService.getRoles()))
+                        .message("profile image Updated!")
+                        .status(OK)
+                        .statusCode(OK.value())
+                        .build());
+    }
+
+    @GetMapping(value = "/image/{fileName}", produces = IMAGE_PNG_VALUE)
+    public byte[] getProfileImage(@PathVariable("fileName") String fileName) throws IOException {
+        return Files.readAllBytes(Paths.get(System.getProperty("user.home")+"/Downloads/images/"+fileName));
     }
 
 

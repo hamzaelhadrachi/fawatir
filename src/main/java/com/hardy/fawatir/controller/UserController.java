@@ -1,6 +1,8 @@
 package com.hardy.fawatir.controller;
 
 import com.hardy.fawatir.dto.UserDTO;
+import com.hardy.fawatir.enumeration.EventType;
+import com.hardy.fawatir.event.NewUserEvent;
 import com.hardy.fawatir.exception.ApiException;
 import com.hardy.fawatir.form.LoginForm;
 import com.hardy.fawatir.form.UpdateAccountSettingsForm;
@@ -8,6 +10,7 @@ import com.hardy.fawatir.form.UpdateForm;
 import com.hardy.fawatir.form.UpdatePasswordForm;
 import com.hardy.fawatir.model.HttpResponse;
 import com.hardy.fawatir.model.User;
+import com.hardy.fawatir.model.UserEvent;
 import com.hardy.fawatir.model.UserPrincipal;
 import com.hardy.fawatir.provider.TokenProvider;
 import com.hardy.fawatir.service.RoleService;
@@ -18,6 +21,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -34,6 +38,8 @@ import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
 
 import static com.hardy.fawatir.dto.mapper.UserDTOMapper.toUser;
+import static com.hardy.fawatir.enumeration.EventType.*;
+import static com.hardy.fawatir.utils.ExceptionUtils.processError;
 import static com.hardy.fawatir.utils.UserUtils.getAuthenticatedUser;
 import static com.hardy.fawatir.utils.UserUtils.getLoggedInUser;
 import static java.time.LocalTime.now;
@@ -56,13 +62,12 @@ public class UserController {
     private final HttpServletRequest request;
     private final HttpServletResponse response;
     private static final String TOKEN_PREFIX = "Bearer ";
+    private final ApplicationEventPublisher publisher;
 
     @PostMapping("/login")
     public ResponseEntity<HttpResponse> login(@RequestBody @Valid() LoginForm loginForm) {
-        Authentication authentication = authenticate(loginForm.getEmail(), loginForm.getPassword());
-        log.info(String.valueOf(authentication));
-        UserDTO userDTO = getLoggedInUser(authentication);
-        return userDTO.isUsingMfa() ? sendVerificationCode(userDTO) : sendResponse(userDTO);
+        UserDTO user = authenticate(loginForm.getEmail(), loginForm.getPassword());
+        return user.isUsingMfa() ? sendVerificationCode(user) : sendResponse(user);
     }
 
     @PostMapping("/register")
@@ -344,12 +349,20 @@ public class UserController {
                         .build());
     }
 
-    private Authentication authenticate(@NotEmpty String email, @NotEmpty String password) {
+    private UserDTO authenticate(@NotEmpty String email, @NotEmpty String password) {
         try {
+            if (null != userService.getUserByEmail(email)){
+                publisher.publishEvent(new NewUserEvent(LOGIN_ATTEMPT, email));
+            }
             Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
-            return authenticate;
+            UserDTO loggedInUser = getLoggedInUser(authenticate);
+            if (!loggedInUser.isUsingMfa()){
+                publisher.publishEvent(new NewUserEvent(LOGIN_ATTEMPT_SUCCESS, email));
+            }
+            return loggedInUser;
         } catch (Exception e) {
-            //processError(request, response, e);
+            publisher.publishEvent(new NewUserEvent(LOGIN_ATTEMPT_FAILURE, email));
+            processError(request, response, e);
             throw new ApiException(e.getMessage());
         }
     }

@@ -8,6 +8,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import static com.hardy.fawatir.utils.RequestUtils.getDevice;
+import static com.hardy.fawatir.utils.RequestUtils.getIpAddress;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -18,7 +21,7 @@ public class NewUserEventListener {
     @EventListener
     public void onNewUserEvent(NewUserEvent event) {
         log.info("NewUserEventListener ====== / onNewUserEvent \\ =============");
-        eventService.addUserEvent(event.getEmail(), event.getEventType(), "device", "PI Address");
+        eventService.addUserEvent(event.getEmail(), event.getEventType(), getDevice(request), getIpAddress(request));
     }
 
 

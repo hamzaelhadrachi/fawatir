@@ -103,9 +103,9 @@ public class UserController {
     }
 
     @PatchMapping("/update")
-    public ResponseEntity<HttpResponse> userupdate(@RequestBody @Valid UpdateForm user) throws InterruptedException {
-        TimeUnit.MILLISECONDS.sleep(3);
+    public ResponseEntity<HttpResponse> userUpdate(@RequestBody @Valid UpdateForm user) throws InterruptedException {
         UserDTO userDTO = userService.updateUserDetails(user);
+        publisher.publishEvent(new NewUserEvent(PROFILE_UPDATE, userDTO.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -159,7 +159,7 @@ public class UserController {
     @GetMapping("/verify/code/{email}/{code}")
     public ResponseEntity<HttpResponse> verifyCode(@PathVariable("email") String email, @PathVariable("code") String code) {
         UserDTO userDTO = userService.verifyCode(email, code);
-
+        publisher.publishEvent(new NewUserEvent(LOGIN_ATTEMPT_SUCCESS, userDTO.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -268,9 +268,11 @@ public class UserController {
     public ResponseEntity<HttpResponse> updatePassword(Authentication authentication, @RequestBody @Valid UpdatePasswordForm form) {
         UserDTO userDTO = getAuthenticatedUser(authentication);
         userService.updatePassword(userDTO.getId(), form.getCurrentPassword(), form.getNewPassword(), form.getConfirmNewPassword());
+        publisher.publishEvent(new NewUserEvent(PASSWORD_UPDATE, userDTO.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
+                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
                         .message("Password Updated!")
                         .status(OK)
                         .statusCode(OK.value())
@@ -281,6 +283,7 @@ public class UserController {
     public ResponseEntity<HttpResponse> updateUserRole(Authentication authentication, @PathVariable("roleName") String roleName) {
         UserDTO userDTO = getAuthenticatedUser(authentication);
         userService.updateUserRole(userDTO.getId(), roleName);
+        publisher.publishEvent(new NewUserEvent(ROLE_UPDATE, userDTO.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -295,6 +298,7 @@ public class UserController {
     public ResponseEntity<HttpResponse> updateAccountSettings(Authentication authentication, @RequestBody @Valid UpdateAccountSettingsForm form) {
         UserDTO userDTO = getAuthenticatedUser(authentication);
         userService.updateAccountSettings(userDTO.getId(), form.getEnabled(),form.getNotLocked());
+        publisher.publishEvent(new NewUserEvent(ACCOUNT_SETTINGS_UPDATE, userDTO.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -308,6 +312,7 @@ public class UserController {
     @PatchMapping("/togglemfa")
     public ResponseEntity<HttpResponse> toggleMfa(Authentication authentication) {
         UserDTO userDto = userService.toggleMfa(getAuthenticatedUser(authentication).getEmail());
+        publisher.publishEvent(new NewUserEvent(MFA_UPDATE, userDto.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
@@ -322,6 +327,7 @@ public class UserController {
     public ResponseEntity<HttpResponse> updateImage(Authentication authentication, @RequestParam("image") MultipartFile image) {
         UserDTO userDto = getAuthenticatedUser(authentication);
         userService.updateImage(userDto,image);
+        publisher.publishEvent(new NewUserEvent(PROFILE_PICTURE_UPDATE, userDto.getEmail()));
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())

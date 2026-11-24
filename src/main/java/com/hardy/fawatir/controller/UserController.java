@@ -13,6 +13,7 @@ import com.hardy.fawatir.model.User;
 import com.hardy.fawatir.model.UserEvent;
 import com.hardy.fawatir.model.UserPrincipal;
 import com.hardy.fawatir.provider.TokenProvider;
+import com.hardy.fawatir.service.EventService;
 import com.hardy.fawatir.service.RoleService;
 import com.hardy.fawatir.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,6 +58,7 @@ public class UserController {
 
     private final UserService userService;
     private final RoleService roleService;
+    private final EventService eventService;
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
     private final HttpServletRequest request;
@@ -92,10 +94,7 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of(
-                                "user", userDTO,
-                                "roles", roleService.getRoles()
-                        ))
+                        .data(of("user", userDTO,"roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDTO.getId())))
                         .message("Profile Found!")
                         .status(OK)
                         .statusCode(OK.value())
@@ -110,7 +109,7 @@ public class UserController {
                 HttpResponse.builder()
                         .timeStamp(now().toString())
                         .data(of(
-                                "user", userDTO
+                                "user", userDTO,"roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDTO.getId())
                         ))
                         .message("User updated !")
                         .status(OK)
@@ -272,7 +271,7 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDTO.getId())))
                         .message("Password Updated!")
                         .status(OK)
                         .statusCode(OK.value())
@@ -287,7 +286,7 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDTO.getId())))
                         .message("Role Updated!")
                         .status(OK)
                         .statusCode(OK.value())
@@ -302,7 +301,7 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles()))
+                        .data(of("user", userService.getuserById(userDTO.getId()), "roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDTO.getId())))
                         .message("Account Settings Updated!")
                         .status(OK)
                         .statusCode(OK.value())
@@ -316,7 +315,7 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user", userDto, "roles", roleService.getRoles()))
+                        .data(of("user", userDto, "roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDto.getId())))
                         .message("Multy Factor Authentication Updated!")
                         .status(OK)
                         .statusCode(OK.value())
@@ -331,7 +330,7 @@ public class UserController {
         return ResponseEntity.ok().body(
                 HttpResponse.builder()
                         .timeStamp(now().toString())
-                        .data(of("user", userDto, "roles", roleService.getRoles()))
+                        .data(of("user", userDto, "roles", roleService.getRoles(), "events",eventService.getEventsByUserId(userDto.getId())))
                         .message("profile image Updated!")
                         .status(OK)
                         .statusCode(OK.value())

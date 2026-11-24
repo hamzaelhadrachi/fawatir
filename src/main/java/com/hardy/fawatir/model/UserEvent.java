@@ -23,6 +23,6 @@ public class UserEvent {
     private String type;
     private String description;
     private String device;
-    private String ipAdresse;
+    private String ipAdress;
     private LocalDateTime createdAt;
 }

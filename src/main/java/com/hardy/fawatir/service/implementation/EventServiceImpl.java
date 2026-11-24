@@ -18,7 +18,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Collection<UserEvent> getEventsByUserId(Long userId) {
-        return List.of();
+        return eventRepository.getEventsByUserId(userId);
     }
 
     @Override
